@@ -1,0 +1,27 @@
+@import 'tailwindcss';
+
+body {
+  margin: 0;
+  background: linear-gradient(135deg, #0f0c29 0%, #2d0036 50%, #4b006e 100%);
+  color: #f3eaff;
+  font-family: 'Akzidenz Grotesk BQ Medium', -apple-system, BlinkMacSystemFont,
+    sans-serif;
+}
+
+.formData-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 12px;
+
+  box-sizing: border-box;
+}
+
+h3 {
+  font-size: 24px;
+  text-align: center;
+  margin: 0;
+  margin-bottom: 8px;
+}
