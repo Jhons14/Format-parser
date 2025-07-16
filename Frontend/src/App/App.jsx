@@ -1,5 +1,5 @@
 import { DataContainer } from '../components/DataContainer/DataContainer';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import './App.css';
 
 export function App() {

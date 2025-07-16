@@ -1,5 +1,5 @@
 env/
-BackConverter/venv/
+Backend/venv/
 src/__pycache__/*
 tests/__pycache__/*
 *.pyc

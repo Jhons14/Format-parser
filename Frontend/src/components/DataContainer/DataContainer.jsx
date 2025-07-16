@@ -1,18 +1,27 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { InputWindow } from '../InputWindow/InputWindow';
 import './DataContainer.css';
 import { OutputWindow } from '../OutputWindow/OutputWindow';
 
 export function DataContainer({ formatToConvert, setFormatToConvert }) {
-  const SERVER_URL = import.meta.env.VITE_SERVER_URL;
-  const JSON_2_XML_URL = `${SERVER_URL}/convert/json-to-xml`;
-  const XML_2_JSON_URL = `${SERVER_URL}/convert/xml-to-json`;
-  const formatErrorMsg = 'Error. Por favor revisa el formato de entrada';
+  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
+  const CONVERT_URL = `${SERVER_URL}/convert`;
+  const formatErrorMsg = 'Error. Please check the input format';
   const formRef = useRef(null);
 
   const [data, setData] = useState('');
   const [dataResult, setDataResult] = useState('');
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const formatOptions = [
+    { key: 'JSON-XML', label: 'JSON TO XML', from: 'json', to: 'xml' },
+    { key: 'JSON-YAML', label: 'JSON TO YAML', from: 'json', to: 'yaml' },
+    { key: 'XML-JSON', label: 'XML TO JSON', from: 'xml', to: 'json' },
+    { key: 'XML-YAML', label: 'XML TO YAML', from: 'xml', to: 'yaml' },
+    { key: 'YAML-JSON', label: 'YAML TO JSON', from: 'yaml', to: 'json' },
+    { key: 'YAML-XML', label: 'YAML TO XML', from: 'yaml', to: 'xml' },
+  ];
 
   useEffect(() => {
     setDataResult('');
@@ -20,53 +29,53 @@ export function DataContainer({ formatToConvert, setFormatToConvert }) {
     setData('');
   }, [formatToConvert]);
 
-  function onSubmitData(e, data) {
+  function getCurrentFormatConfig() {
+    return (
+      formatOptions.find((option) => option.key === formatToConvert) ||
+      formatOptions[0]
+    );
+  }
+
+  async function onSubmitData(e, data) {
     e.preventDefault();
     if (!data || data.trim() === '') {
+      setError('Please enter some data to convert');
       return;
     }
+
+    setIsLoading(true);
     setDataResult('');
     setError('');
 
-    if (formatToConvert === 'JSON-XML') {
-      onSubmitJSON(data);
-    } else {
-      onSubmitXML(data);
-    }
-  }
+    try {
+      const formatConfig = getCurrentFormatConfig();
+      const response = await fetch(
+        `${CONVERT_URL}?from=${formatConfig.from}&to=${formatConfig.to}`,
+        {
+          method: 'POST',
+          body: data,
+          headers: {
+            'Content-Type':
+              formatConfig.from === 'json' ? 'application/json' : 'text/plain',
+          },
+        }
+      );
 
-  async function onSubmitJSON(jsonData) {
-    const response = await fetch(JSON_2_XML_URL, {
-      method: 'POST',
-      body: jsonData,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    if (response.ok) {
-      setDataResult(await response.text());
-    } else if (response.status === 400) {
-      alert(formatErrorMsg);
-    } else if (!response || response.status === 500) {
-      setError('Error en el servidor');
-    }
-  }
-
-  async function onSubmitXML(xmlData) {
-    const response = await fetch(XML_2_JSON_URL, {
-      method: 'POST',
-      body: xmlData,
-      headers: {
-        'Content-Type': 'application/xml',
-      },
-    });
-
-    if (response.ok) {
-      setDataResult(await response.json());
-    } else if (response.status === 400) {
-      alert(formatErrorMsg);
-    } else if (!response || response.status === 500) {
-      setError('Error en el servidor');
+      if (response.ok) {
+        if (formatConfig.to === 'json') {
+          const jsonResult = await response.json();
+          setDataResult(JSON.stringify(jsonResult, null, 2));
+        } else {
+          setDataResult(await response.text());
+        }
+      } else {
+        const errorResponse = await response.json();
+        setError(errorResponse.error || formatErrorMsg);
+      }
+    } catch (err) {
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -75,54 +84,47 @@ export function DataContainer({ formatToConvert, setFormatToConvert }) {
   }
 
   function isSelected(format) {
-    if (format === formatToConvert) {
-      return 'active';
-    } else {
-      return '';
-    }
+    return format === formatToConvert ? 'active' : '';
   }
+
+  const currentConfig = getCurrentFormatConfig();
+
   return (
     <form
       className='data-form'
       ref={formRef}
       onSubmit={(e) => onSubmitData(e, data)}
     >
-      {formatToConvert === 'JSON-XML' ? (
-        <div className='data-container'>
-          <InputWindow format={'json'} setData={setData} />
-          <OutputWindow dataResult={dataResult} format={'xml'} />
-        </div>
-      ) : (
-        <div className='data-container'>
-          <InputWindow format={'xml'} setData={setData} />
-          <OutputWindow dataResult={dataResult} format={'json'} />
-        </div>
-      )}
+      <div className='data-container'>
+        <InputWindow format={currentConfig.from} setData={setData} key={formatToConvert} />
+        <OutputWindow
+          dataResult={dataResult}
+          format={currentConfig.to}
+          error={error}
+        />
+      </div>
+
       <div className='flex items-center justify-center'>
         <button
           className='button bg-blue-600 hover:bg-blue-700 cursor-pointer my-2'
           type='submit'
+          disabled={isLoading}
         >
-          Transform
+          {isLoading ? 'Converting...' : 'Transform'}
         </button>
       </div>
+
       <div className='format-buttons-container'>
-        <button
-          type='button'
-          className={` format-button ${isSelected('JSON-XML')}`}
-          id={'JSON-XML'}
-          onClick={() => onChooseFormat('JSON-XML')}
-        >
-          JSON TO XML
-        </button>
-        <button
-          type='button'
-          className={` format-button ${isSelected('XML-JSON')}`}
-          id={'XML-JSON'}
-          onClick={() => onChooseFormat('XML-JSON')}
-        >
-          XML TO JSON
-        </button>
+        {formatOptions.map((option) => (
+          <button
+            key={option.key}
+            type='button'
+            className={`format-button ${isSelected(option.key)}`}
+            onClick={() => onChooseFormat(option.key)}
+          >
+            {option.label}
+          </button>
+        ))}
       </div>
     </form>
   );
