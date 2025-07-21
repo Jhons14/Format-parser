@@ -7,7 +7,6 @@ export function App() {
 
   return (
     <div className='formData-container'>
-      <h3 htmlFor='data-input'>{formatToConvert}</h3>
       <DataContainer
         formatToConvert={formatToConvert}
         setFormatToConvert={setFormatToConvert}

@@ -96,7 +96,11 @@ export function DataContainer({ formatToConvert, setFormatToConvert }) {
       onSubmit={(e) => onSubmitData(e, data)}
     >
       <div className='data-container'>
-        <InputWindow format={currentConfig.from} setData={setData} key={formatToConvert} />
+        <InputWindow
+          format={currentConfig.from}
+          setData={setData}
+          key={formatToConvert}
+        />
         <OutputWindow
           dataResult={dataResult}
           format={currentConfig.to}
@@ -112,19 +116,18 @@ export function DataContainer({ formatToConvert, setFormatToConvert }) {
         >
           {isLoading ? 'Converting...' : 'Transform'}
         </button>
-      </div>
-
-      <div className='format-buttons-container'>
-        {formatOptions.map((option) => (
-          <button
-            key={option.key}
-            type='button'
-            className={`format-button ${isSelected(option.key)}`}
-            onClick={() => onChooseFormat(option.key)}
-          >
-            {option.label}
-          </button>
-        ))}
+        <div className='format-buttons-container'>
+          {formatOptions.map((option) => (
+            <button
+              key={option.key}
+              type='button'
+              className={`format-button ${isSelected(option.key)}`}
+              onClick={() => onChooseFormat(option.key)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
       </div>
     </form>
   );
