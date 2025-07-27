@@ -1,0 +1,30 @@
+services:
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: dataconverter-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+    networks:
+      - dataconverter-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: dataconverter-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - dataconverter-network
+    restart: unless-stopped
+
+networks:
+  dataconverter-network:
+    driver: bridge
